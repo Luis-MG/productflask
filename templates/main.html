@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- CSS only -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.css">
+  
+    <!-- JavaScript Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
+    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.js"></script>
+    <style type="text/css">
+     
+      #cont {
+          margin: 2vw;
+      }
+
+    </style>
+    <title>{{title}}</title>
+    
+</head>
+{%include 'banner.html'%}
+<body>
+  <div id="cont">
+  <div id="alertdiv"></div>
+  <div class="d-grid gap-2 d-md-flex">
+  <div class="input-group mb-3"style="width: 18rem;">
+    <input type="search" class="form-control" name="patron" placeholder="Que desea encontrar..." aria-label="Recipient's username" aria-describedby="button-addon2">
+    <button class="btn btn-outline-secondary" type="button" id="btn_buscar">Buscar</button>
+  </div>
+  <a href="/add/" class="btn btn-primary mb-3" role="button">agregar datos</a>
+  
+</div>
+  <div class="card" >
+    <div class="card-header">
+      <b>Productos Disponibles:</b>
+    </div>
+  <!--   <ul class="list-group list-group-flush">
+      {% for product in products %}
+        
+      <li class="list-group-item d-flex justify-content-between">
+        <a href="/product/{{product['id']}}" class="mr-auto p-1">{{product['nombre']}}</a> 
+        <a id="{{product['id']}}"  class="btn btn-danger p-1" role="button"><i class="bi bi-trash"></i></a>
+      </li>
+      {%endfor%}
+      
+
+    </ul> -->
+    <table id="data-table_code" class="display" style="width:100%">
+      <thead>
+          <tr>
+              <th>Id</th>
+              <th>Nombre</th>
+              <th>Marca</th>
+              <th>Modelo</th>
+              <th>Precio</th>
+              <th>Descuento %</th>
+              <th>Action</th>
+          </tr>
+      </thead>
+      
+  </table>
+  </div>
+  <br>
+  </div>
+</body>
+{%include 'footer.html'%}
+</html>
+
+
+<script>
+  $( document ).ready(function() {
+    loaddata();
+  function loaddata (scp="/all"){  
+    
+    $.ajax({
+                
+                type: 'GET',
+                url: scp,
+                contentType: "application/json",
+                
+                beforeSend: function(){
+                    console.log("Obteniendo datos...");
+                },
+                success: function (response) {
+                    
+                    fillTable(response.data);
+                },
+                error: function (response) {
+                  console.log(response)
+
+                }
+            });
+          }
+    $('table').on('click','.btn-danger', function(){
+      var id = this.id
+      $.ajax({
+
+            url: '/del/'+id,
+            dataType: 'json',
+            cache: 'false',
+            beforeSend: function () {
+              console.log('deleteing')
+            }
+        }).done(function (data) {
+          if(data['code']==200) {
+              loaddata();
+              $('#'+id).alert();
+              window.setTimeout(() => {
+                $('#'+id).alert('close')
+              }, 1200); 
+            
+          }
+        });
+    });
+
+
+
+  $('#btn_buscar').click(function(){
+    patron =  $('input[name="patron"]').val();
+    loaddata('/buscar/'+patron)
+  
+    });
+  });
+
+  function fillTable(data){
+            $('#data-table_code').DataTable().destroy();
+            $('#data-table_code').show();
+            $('#data-table_code').DataTable({
+                select:true,
+                dom: 'B<"clear">rtip',
+                pageLength: 5,
+                buttons: {
+                    name: 'primary',
+                    buttons: [
+                    'copy'
+                    ]
+                },
+                columnDefs:[{ // define para columnas valores manuales
+                  target: 6, // apunta a la columna action
+                   render: function(data,type,row){ // row para obtener el valor de cada registro
+                     return '<div class="d-flex justify-content-around"><a id="'+row['id']+'"  class="btn btn-danger px-3" role="button"><i class="bi bi-trash"></i></a>'+
+                     '<a href="/product/'+row['id']+'"  class="btn btn-info px-3" role="button"><i class="bi bi-eye"></i></a></div>'
+                   }
+                }],
+                "data": data,
+                "columns": [
+                    { "data": "id" },
+                    { "data": "nombre" },
+                    { "data": "marca" },
+                    { "data": "referencia" },
+                    { "data": "precio" },
+                    { "data": "descuento" },
+                ], select: true,
+                lengthMenu: [
+                    [15, 30, 45, -1],
+                    ["15 Rows", "30 Rows", "45 Rows", "Todo"]
+                ],
+                language: {
+                    searchPlaceholder: "Buscar Datos",
+                    infoEmpty: "La tabla no tiene registros",
+                    zeroRecords:"No hay datos",
+                },
+            });
+          }
+</script>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <!-- CSS only -->
+     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.2/font/bootstrap-icons.css">
+     <!-- JavaScript Bundle with Popper -->
+     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
+     <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.6.0.min.js"></script>
+   <title>{{title}}</title>
+   <style type="text/css">
+
+        .card {
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #cont {
+          margin: 2vw;
+      }
+     </style>
+</head>
+{%include 'banner.html'%}
+<body>
+    <div class="card" style="max-width: 50rem;">
+        <h5 class="card-header">Agregar Nuevo Producto: </h5>
+        <div class="card-body">            
+            
+            <form id="frmadd" class="row g-3">
+                <div class="col-md-12">
+                  <label for="validationDefault01" class="form-label">CODIGO</label>
+                  <input type="text" name="id" class="form-control" id="validationDefault01" value="{{code}}" required readonly>
+                </div>
+                <div class="col-md-12">
+                  <label for="validationDefault02" class="form-label">Nombre</label>
+                  <input type="text" name="nombre" class="form-control" id="validationDefault02" value="" required>
+                </div>
+
+                <div class="col-md-12">
+                    <label for="validationDefault02" class="form-label">Marca</label>
+                    <input type="text" name="marca" class="form-control" id="validationDefault02" value="" required>
+                  </div>
+                
+                  <div class="col-md-12">
+                    <label for="validationDefault02" class="form-label">Precio</label>
+                    <input type="text" name="precio" class="form-control" id="validationDefault02" value="" required>
+                  </div>
+
+                
+              </form></br>
+              <div class="col-12">
+                <button id="submit" class="btn btn-primary">Guardar</button>
+              </div>
+            </br>
+            <a href="/" class="btn btn-primary">Home</a>
+        </div>
+      </div>
+
+<!--MODAL-->
+<div class="modal fade" id="modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Producto Agregado</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <b>Codigo</b><p id="id_add">000</p>
+        <b>Nombre</b><p id="nombre_add">NOMBRE</p>
+        <b>Marca</b><p id="marca_add">MARCA</p>
+        <b>Precio</b><p id="precio_add">9999</p>
+      </div>
+      <div class="modal-footer">
+        <button id="modal_btn" type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</body>
+{%include 'footer.html'%}
+</html>
+
+<script>
+$('#modal_btn').click(function(){
+  $('#submit').text('Guardar')
+});
+
+$('#submit').click(function(){
+  //JSON.parse(toJSONString("frmadd"))
+  let valid = check_form("frmadd");
+
+
+
+if(valid){
+  $.ajax({
+    
+                    url: '/add/commit',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    data: toJSONString("frmadd"),
+                    cache: 'false',
+                    beforeSend: function () {
+                        // setting a timeout
+                        $('#submit').text('agregando..')
+                    }
+                }).done(function (data) {
+                    if (data['code'] == 200) {
+                      $('#submit').text('Guardado!')
+                      $('#id_add').text($('input[name="id"]').val())
+                      $('#nombre_add').text($('input[name="nombre"]').val())
+                      $('#marca_add').text($('input[name="marca"]').val())
+                      $('#precio_add').text($('input[name="precio"]').val())
+                      $('#modal').modal('toggle')
+                      $('#submit').text('Guardar')
+                    }                     
+                    
+                });
+}
+});
+
+
+ function toJSONString(form) {
+        var form = document.getElementById(form);
+        var obj = {};
+        var elements = form.querySelectorAll("input");
+        for (var i = 0; i < elements.length; ++i) {
+            var element = elements[i];
+            var name = element.name;
+            var value = element.value;
+
+            if (name) {
+              obj[name] = value;
+            }
+            
+        }
+
+        
+        console.log(obj);
+        console.log('"'+JSON.stringify(obj)+'"');
+        return JSON.stringify(obj);
+    }
+
+  function check_form(form){
+        var valid = true;
+        
+        var form = document.getElementById(form);
+        var elements = form.querySelectorAll("input");
+        for (var i = 0; i < elements.length; ++i) {
+            var element = elements[i];
+            
+            if(element.name=="precio"){
+              
+              if(element.value=="" || isNaN(element.value)){
+                valid = false;
+                $('input[name="'+element.name+'"]').addClass('is-invalid');
+               }else{
+                $('input[name="'+element.name+'"]').removeClass('is-invalid').addClass('is-valid');   
+               }
+            }else if(element.value==""){
+              valid = false;
+              $('input[name="'+element.name+'"]').addClass('is-invalid');
+            }else{
+              $('input[name="'+element.name+'"]').removeClass('is-invalid').addClass('is-valid');
+            }
+            
+        }
+
+        
+
+      return valid;
+  }
+</script>
